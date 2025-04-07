@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>デジタル時計</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+      const timestamp = new Date().getTime();
+      const loadCSS = (href) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href + '?v=' + timestamp;
+        document.head.appendChild(link);
+      };
+      loadCSS('css/reset.css');
+      loadCSS('css/common.css');
+    </script>
+  </head>
+  <body>
+    <button id="uiToggleBtn" class="ui-toggle-btn">
+      <span class="material-icons">visibility</span>
+    </button>
+    <div id="uiControls" class="ui-controls">
+      <button id="fullscreenBtn" class="fullscreen-btn">
+        <span class="material-icons">fullscreen</span>
+      </button>
+      <button id="alarmBtn" class="alarm-btn">
+        <span class="material-icons">notifications_off</span>
+      </button>
+      <button id="workTimeBtn" class="work-time-btn">
+        <span class="material-icons">work_off</span>
+      </button>
+    </div>
+    <div id="soundControls" class="sound-controls">
+      <div class="sound-control">
+        <span>時報音</span>
+        <button class="preview-btn" data-sound="alarmSound">
+          <span class="material-icons">play_circle</span>
+        </button>
+      </div>
+      <div class="sound-control">
+        <span>ランチ</span>
+        <button class="preview-btn" data-sound="lunchSound">
+          <span class="material-icons">play_circle</span>
+        </button>
+      </div>
+      <div class="sound-control">
+        <span>終業</span>
+        <button class="preview-btn" data-sound="endSound">
+          <span class="material-icons">play_circle</span>
+        </button>
+      </div>
+    </div>
+    <div class="container">
+      <div class="clock-container">
+        <div class="clock">
+          <div class="time" id="time">00:00:00</div>
+          <div class="date" id="date">2024年4月7日</div>
+          <div class="work-progress-container" id="workProgressContainer" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress" id="workProgress"></div>
+            </div>
+            <div class="progress-text" id="workProgressText">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <audio id="alarmSound" src="sound.mp3"></audio>
+    <audio id="endSound" src="end.mp3"></audio>
+    <audio id="lunchSound" src="lunch.mp3"></audio>
+    <script>
+      const script = document.createElement('script');
+      script.src = 'js/clock.js?v=' + timestamp;
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
