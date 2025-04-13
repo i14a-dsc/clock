@@ -5,13 +5,13 @@
 :root {
   --bg-primary: #000000;
   --bg-secondary: #0a0a0a;
-  --text-primary: #808080;
-  --text-secondary: #404040;
+  --text-primary: #C0C0C0;
+  --text-secondary: #B0B0B0;
   --accent-color: #1a4a6e;
   --error-color: #6e1a1a;
   --success-color: #1a6e1a;
   --border-color: #202020;
-  --progress-color: #1a4a6e;
+  --progress-color: #3a8acb;
   --transition-speed: 0.2s;
 }
 
@@ -591,4 +591,42 @@ body.hide-ui .sound-controls {
 
 body:fullscreen .ui-toggle-btn {
     display: block;
+}
+
+.position-toggle-btn {
+    position: fixed;
+    top: 1rem;
+    left: 4rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all var(--transition-speed);
+    z-index: 1001;
+}
+
+.position-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.position-toggle-btn .material-icons {
+    font-size: 1.5rem;
+}
+
+.position-toggle-btn.active {
+    color: var(--accent-color);
+}
+
+body.top-position .clock-container {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    padding-top: 1rem;
+}
+
+body.top-position .work-progress-container {
+    margin-top: 0;
 }

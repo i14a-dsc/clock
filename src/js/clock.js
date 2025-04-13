@@ -5,13 +5,16 @@ let isUiVisible = true;
 let lastHour = new Date().getHours();
 let hasPlayedEndSound = false;
 let hasPlayedLunchSound = false;
+let isTopPosition = false;
 
 const alarmSound = document.getElementById('alarmSound');
 const endSound = document.getElementById('endSound');
 const lunchSound = document.getElementById('lunchSound');
-alarmSound.load();
-endSound.load();
-lunchSound.load();
+
+[alarmSound, endSound, lunchSound].forEach(sound => {
+    sound.load();
+    sound.preload = 'auto';
+});
 
 const previewButtons = document.querySelectorAll('.preview-btn');
 previewButtons.forEach(button => {
@@ -81,7 +84,7 @@ function calculateProgress(now) {
         const progress = 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100);
         return {
             progress,
-            text: `勤務開始まで ${Math.floor(totalSecondsUntilStart / 3600)}時間${Math.floor((totalSecondsUntilStart % 3600) / 60)}分`
+            text: `勤務開始まで ${Math.floor(totalSecondsUntilStart / 3600)}時間${Math.floor((totalSecondsUntilStart % 3600) / 60)}分 (${Math.round(progress)}%)`
         };
     }
     
@@ -92,13 +95,13 @@ function calculateProgress(now) {
         const remainingSeconds = totalWorkSeconds - totalSecondsWorked;
         return {
             progress,
-            text: `残り ${Math.floor(remainingSeconds / 3600)}時間${Math.floor((remainingSeconds % 3600) / 60)}分`
+            text: `残り ${Math.floor(remainingSeconds / 3600)}時間${Math.floor((remainingSeconds % 3600) / 60)}分 (${Math.round(progress)}%)`
         };
     }
 
     return {
         progress: 100,
-        text: '勤務時間終了'
+        text: '勤務時間終了 (100%)'
     };
 }
 
@@ -160,6 +163,15 @@ uiToggleBtn.addEventListener('click', () => {
     uiToggleBtn.classList.toggle('active', !isUiVisible);
     const icon = uiToggleBtn.querySelector('.material-icons');
     icon.textContent = isUiVisible ? 'visibility' : 'visibility_off';
+});
+
+const positionToggleBtn = document.getElementById('positionToggleBtn');
+positionToggleBtn.addEventListener('click', () => {
+    isTopPosition = !isTopPosition;
+    document.body.classList.toggle('top-position', isTopPosition);
+    positionToggleBtn.classList.toggle('active', isTopPosition);
+    const icon = positionToggleBtn.querySelector('.material-icons');
+    icon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
 });
 
 function updateClock() {
