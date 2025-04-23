@@ -6,6 +6,7 @@ let lastHour = new Date().getHours();
 let hasPlayedEndSound = false;
 let hasPlayedLunchSound = false;
 let isTopPosition = false;
+let timeShift = 0;
 
 const alarmSound = document.getElementById('alarmSound');
 const endSound = document.getElementById('endSound');
@@ -73,13 +74,28 @@ function resetDailyFlags() {
     }
 }
 
+const timeShiftButtons = document.querySelectorAll('.time-shift-btn');
+timeShiftButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const shift = parseInt(button.getAttribute('data-shift'));
+        timeShift += shift;
+        if (timeShift < -60) timeShift = -60;
+        if (timeShift > 60) timeShift = 60;
+    });
+});
+
 function calculateProgress(now) {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentSecond = now.getSeconds();
 
-    if (currentHour < WORK_START_HOUR) {
-        const totalSecondsUntilStart = (WORK_START_HOUR * 3600) - (currentHour * 3600 + currentMinute * 60 + currentSecond);
+    const adjustedHour = currentHour + Math.floor(timeShift / 60);
+    const adjustedMinute = currentMinute + (timeShift % 60);
+    const adjustedDate = new Date(now);
+    adjustedDate.setHours(adjustedHour, adjustedMinute, currentSecond);
+
+    if (adjustedHour < WORK_START_HOUR) {
+        const totalSecondsUntilStart = (WORK_START_HOUR * 3600) - (adjustedHour * 3600 + adjustedMinute * 60 + currentSecond);
         const totalSecondsInPreWork = WORK_START_HOUR * 3600;
         const progress = 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100);
         return {
@@ -88,8 +104,8 @@ function calculateProgress(now) {
         };
     }
     
-    if (currentHour < WORK_END_HOUR) {
-        const totalSecondsWorked = (currentHour - WORK_START_HOUR) * 3600 + currentMinute * 60 + currentSecond;
+    if (adjustedHour < WORK_END_HOUR) {
+        const totalSecondsWorked = (adjustedHour - WORK_START_HOUR) * 3600 + adjustedMinute * 60 + currentSecond;
         const totalWorkSeconds = (WORK_END_HOUR - WORK_START_HOUR) * 3600;
         const progress = (totalSecondsWorked / totalWorkSeconds) * 100;
         const remainingSeconds = totalWorkSeconds - totalSecondsWorked;
