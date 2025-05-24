@@ -26,6 +26,9 @@
     <button id="positionToggleBtn" class="position-toggle-btn">
       <span class="material-icons">vertical_align_top</span>
     </button>
+    <button id="cacheUpdateBtn" class="cache-update-btn" style="display: none;">
+      <span class="material-icons">refresh</span>
+    </button>
     <div id="uiControls" class="ui-controls">
       <button id="fullscreenBtn" class="fullscreen-btn">
         <span class="material-icons">fullscreen</span>
@@ -86,6 +89,21 @@
       const script = document.createElement('script');
       script.src = 'js/clock.js?v=' + timestamp;
       document.body.appendChild(script);
+
+      if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+              .then((registration) => {
+                console.log('ServiceWorker registration successful');
+                document.getElementById('cacheUpdateBtn').style.display = 'block';
+              })
+              .catch((err) => {
+                console.log('ServiceWorker registration failed: ', err);
+              });
+          });
+        }
+      }
     </script>
   </body>
 </html>

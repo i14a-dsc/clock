@@ -89,15 +89,17 @@ function calculateProgress(now) {
     const currentMinute = now.getMinutes();
     const currentSecond = now.getSeconds();
 
-    const adjustedHour = currentHour + Math.floor(timeShift / 60);
-    const adjustedMinute = currentMinute + (timeShift % 60);
+    const totalMinutes = currentHour * 60 + currentMinute + timeShift;
+    const adjustedHour = Math.floor(totalMinutes / 60);
+    const adjustedMinute = totalMinutes % 60;
+    
     const adjustedDate = new Date(now);
     adjustedDate.setHours(adjustedHour, adjustedMinute, currentSecond);
 
     if (adjustedHour < WORK_START_HOUR) {
         const totalSecondsUntilStart = (WORK_START_HOUR * 3600) - (adjustedHour * 3600 + adjustedMinute * 60 + currentSecond);
         const totalSecondsInPreWork = WORK_START_HOUR * 3600;
-        const progress = 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100);
+        const progress = Math.max(0, 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100));
         return {
             progress,
             text: `勤務開始まで ${Math.floor(totalSecondsUntilStart / 3600)}時間${Math.floor((totalSecondsUntilStart % 3600) / 60)}分 (${Math.round(progress)}%)`
@@ -107,7 +109,7 @@ function calculateProgress(now) {
     if (adjustedHour < WORK_END_HOUR) {
         const totalSecondsWorked = (adjustedHour - WORK_START_HOUR) * 3600 + adjustedMinute * 60 + currentSecond;
         const totalWorkSeconds = (WORK_END_HOUR - WORK_START_HOUR) * 3600;
-        const progress = (totalSecondsWorked / totalWorkSeconds) * 100;
+        const progress = Math.min(100, (totalSecondsWorked / totalWorkSeconds) * 100);
         const remainingSeconds = totalWorkSeconds - totalSecondsWorked;
         return {
             progress,
@@ -221,7 +223,11 @@ function updateClock() {
         workProgress.style.width = `${progress}%`;
         workProgressText.textContent = text;
 
-        if (currentHour === WORK_END_HOUR && now.getMinutes() === 0 && !hasPlayedEndSound) {
+        const totalMinutes = currentHour * 60 + now.getMinutes() + timeShift;
+        const adjustedHour = Math.floor(totalMinutes / 60);
+        const adjustedMinute = totalMinutes % 60;
+
+        if (adjustedHour === WORK_END_HOUR && adjustedMinute === 0 && !hasPlayedEndSound) {
             endSound.play();
             hasPlayedEndSound = true;
         }
@@ -231,4 +237,23 @@ function updateClock() {
 }
 
 updateClock();
-setInterval(updateClock, 1000); 
+setInterval(updateClock, 1000);
+
+const cacheUpdateBtn = document.getElementById('cacheUpdateBtn');
+if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+    cacheUpdateBtn.addEventListener('click', async () => {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    cacheUpdateBtn.classList.add('active');
+                    await registration.update();
+                    await caches.delete('clock-cache-v1');
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('キャッシュの更新に失敗しました:', error);
+            }
+        }
+    });
+} 
