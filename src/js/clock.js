@@ -42,7 +42,13 @@ async function saveSettings() {
             isWakeLockEnabled
         };
 
-        await store.put(settings, 'clock-settings');
+        await new Promise((resolve, reject) => {
+            const request = store.put(settings, 'clock-settings');
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+
+        console.log('設定を保存しました:', settings);
     } catch (error) {
         console.error('設定の保存に失敗しました:', error);
     }
@@ -56,13 +62,11 @@ async function loadSettings() {
         const settings = await store.get('clock-settings');
 
         if (settings) {
-            // 設定値を更新
             isAlarmEnabled = settings.isAlarmEnabled ?? false;
             isWorkTimeEnabled = settings.isWorkTimeEnabled ?? false;
             isTopPosition = settings.isTopPosition ?? false;
             isWakeLockEnabled = settings.isWakeLockEnabled ?? false;
 
-            // UIの状態を更新
             await updateUIFromSettings();
         }
     } catch (error) {
@@ -71,17 +75,14 @@ async function loadSettings() {
 }
 
 async function updateUIFromSettings() {
-    // アラーム設定の更新
     alarmBtn.classList.toggle('active', isAlarmEnabled);
     const alarmIcon = alarmBtn.querySelector('.material-icons');
     alarmIcon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
 
-    // 勤務時間設定の更新
     workTimeBtn.classList.toggle('active', isWorkTimeEnabled);
     const workIcon = workTimeBtn.querySelector('.material-icons');
     workIcon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
     
-    // プログレスバーの表示状態を更新
     if (isWorkTimeEnabled) {
         workProgressContainer.style.display = 'block';
         const now = new Date();
@@ -92,18 +93,15 @@ async function updateUIFromSettings() {
         workProgressContainer.style.display = 'none';
     }
 
-    // 画面位置設定の更新
     document.body.classList.toggle('top-position', isTopPosition);
     positionToggleBtn.classList.toggle('active', isTopPosition);
     const positionIcon = positionToggleBtn.querySelector('.material-icons');
     positionIcon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
 
-    // WakeLock設定の更新
     wakeLockBtn.classList.toggle('active', isWakeLockEnabled);
     const wakeLockIcon = wakeLockBtn.querySelector('.material-icons');
     wakeLockIcon.textContent = isWakeLockEnabled ? 'power_off' : 'power_settings_new';
 
-    // WakeLockの復元
     if (isWakeLockEnabled) {
         try {
             await requestWakeLock();
@@ -166,14 +164,14 @@ const workProgress = document.getElementById('workProgress');
 const workProgressText = document.getElementById('workProgressText');
 
         
-workTimeBtn.addEventListener('click', () => {
+workTimeBtn.addEventListener('click', async () => {
     isWorkTimeEnabled = !isWorkTimeEnabled;
     workTimeBtn.classList.toggle('active');
     const icon = workTimeBtn.querySelector('.material-icons');
     icon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
     workProgressContainer.style.display = isWorkTimeEnabled ? 'block' : 'none';
     hasPlayedEndSound = false;
-    saveSettings();
+    await saveSettings();
 });
 
 function resetDailyFlags() {
@@ -234,12 +232,12 @@ function calculateProgress(now) {
 }
 
 const alarmBtn = document.getElementById('alarmBtn');
-alarmBtn.addEventListener('click', () => {
+alarmBtn.addEventListener('click', async () => {
     isAlarmEnabled = !isAlarmEnabled;
     alarmBtn.classList.toggle('active');
     const icon = alarmBtn.querySelector('.material-icons');
     icon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
-    saveSettings();
+    await saveSettings();
 });
 
 const wakeLockBtn = document.getElementById('wakeLockBtn');
@@ -259,7 +257,7 @@ wakeLockBtn.addEventListener('click', async () => {
             console.error('WakeLockの取得に失敗しました:', error);
         }
     }
-    saveSettings();
+    await saveSettings();
 });
 
 async function requestWakeLock() {
@@ -320,13 +318,13 @@ uiToggleBtn.addEventListener('click', () => {
 });
 
 const positionToggleBtn = document.getElementById('positionToggleBtn');
-positionToggleBtn.addEventListener('click', () => {
+positionToggleBtn.addEventListener('click', async () => {
     isTopPosition = !isTopPosition;
     document.body.classList.toggle('top-position', isTopPosition);
     positionToggleBtn.classList.toggle('active', isTopPosition);
     const icon = positionToggleBtn.querySelector('.material-icons');
     icon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
-    saveSettings();
+    await saveSettings();
 });
 
 function updateClock() {
@@ -373,14 +371,12 @@ function updateClock() {
     resetDailyFlags();
 }
 
-// 初期化処理
 async function initialize() {
     await loadSettings();
     updateClock();
     setInterval(updateClock, 1000);
 }
 
-// 初期化を実行
 initialize();
 
 const cacheUpdateBtn = document.getElementById('cacheUpdateBtn');
