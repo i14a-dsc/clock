@@ -687,3 +687,33 @@ body.hide-ui .time-shift-buttons {
 body.hide-ui .cache-update-btn {
     display: none;
 }
+
+.wake-lock-btn {
+    position: fixed;
+    top: 1rem;
+    left: 10rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all var(--transition-speed);
+    z-index: 1001;
+}
+
+.wake-lock-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.wake-lock-btn .material-icons {
+    font-size: 1.5rem;
+}
+
+.wake-lock-btn.active {
+    color: var(--accent-color);
+}
+
+body.hide-ui .wake-lock-btn {
+    display: none;
+}

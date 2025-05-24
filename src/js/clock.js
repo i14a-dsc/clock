@@ -7,6 +7,94 @@ let hasPlayedEndSound = false;
 let hasPlayedLunchSound = false;
 let isTopPosition = false;
 let timeShift = 0;
+let isWakeLockEnabled = false;
+
+const DB_NAME = 'clock-settings';
+const DB_VERSION = 1;
+const STORE_NAME = 'settings';
+
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+    });
+}
+
+async function saveSettings() {
+    try {
+        const db = await initDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+
+        const settings = {
+            isAlarmEnabled,
+            isWorkTimeEnabled,
+            isTopPosition,
+            isWakeLockEnabled
+        };
+
+        await store.put(settings, 'clock-settings');
+    } catch (error) {
+        console.error('設定の保存に失敗しました:', error);
+    }
+}
+
+async function loadSettings() {
+    try {
+        const db = await initDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const settings = await store.get('clock-settings');
+
+        if (settings) {
+            isAlarmEnabled = settings.isAlarmEnabled;
+            isWorkTimeEnabled = settings.isWorkTimeEnabled;
+            isTopPosition = settings.isTopPosition;
+            isWakeLockEnabled = settings.isWakeLockEnabled;
+
+            // UIの状態を更新
+            alarmBtn.classList.toggle('active', isAlarmEnabled);
+            const alarmIcon = alarmBtn.querySelector('.material-icons');
+            alarmIcon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
+
+            workTimeBtn.classList.toggle('active', isWorkTimeEnabled);
+            const workIcon = workTimeBtn.querySelector('.material-icons');
+            workIcon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
+            workProgressContainer.style.display = isWorkTimeEnabled ? 'block' : 'none';
+
+            document.body.classList.toggle('top-position', isTopPosition);
+            positionToggleBtn.classList.toggle('active', isTopPosition);
+            const positionIcon = positionToggleBtn.querySelector('.material-icons');
+            positionIcon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
+
+            wakeLockBtn.classList.toggle('active', isWakeLockEnabled);
+            const wakeLockIcon = wakeLockBtn.querySelector('.material-icons');
+            wakeLockIcon.textContent = isWakeLockEnabled ? 'power_off' : 'power_settings_new';
+
+            if (isWakeLockEnabled) {
+                try {
+                    await requestWakeLock();
+                } catch (error) {
+                    console.error('WakeLockの復元に失敗しました:', error);
+                    isWakeLockEnabled = false;
+                    wakeLockBtn.classList.remove('active');
+                    wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('設定の読み込みに失敗しました:', error);
+    }
+}
 
 const alarmSound = document.getElementById('alarmSound');
 const endSound = document.getElementById('endSound');
@@ -64,6 +152,7 @@ workTimeBtn.addEventListener('click', () => {
     icon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
     workProgressContainer.style.display = isWorkTimeEnabled ? 'block' : 'none';
     hasPlayedEndSound = false;
+    saveSettings();
 });
 
 function resetDailyFlags() {
@@ -129,6 +218,27 @@ alarmBtn.addEventListener('click', () => {
     alarmBtn.classList.toggle('active');
     const icon = alarmBtn.querySelector('.material-icons');
     icon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
+    saveSettings();
+});
+
+const wakeLockBtn = document.getElementById('wakeLockBtn');
+wakeLockBtn.addEventListener('click', async () => {
+    if (isWakeLockEnabled) {
+        releaseWakeLock();
+        isWakeLockEnabled = false;
+        wakeLockBtn.classList.remove('active');
+        wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
+    } else {
+        try {
+            await requestWakeLock();
+            isWakeLockEnabled = true;
+            wakeLockBtn.classList.add('active');
+            wakeLockBtn.querySelector('.material-icons').textContent = 'power_off';
+        } catch (error) {
+            console.error('WakeLockの取得に失敗しました:', error);
+        }
+    }
+    saveSettings();
 });
 
 async function requestWakeLock() {
@@ -136,10 +246,15 @@ async function requestWakeLock() {
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLock.addEventListener('release', () => {
             console.log('Wake Lock was released');
+            isWakeLockEnabled = false;
+            wakeLockBtn.classList.remove('active');
+            wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
+            saveSettings();
         });
         console.log('Wake Lock is active');
     } catch (err) {
         console.error(`${err.name}, ${err.message}`);
+        throw err;
     }
 }
 
@@ -190,6 +305,7 @@ positionToggleBtn.addEventListener('click', () => {
     positionToggleBtn.classList.toggle('active', isTopPosition);
     const icon = positionToggleBtn.querySelector('.material-icons');
     icon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
+    saveSettings();
 });
 
 function updateClock() {
@@ -256,4 +372,7 @@ if (window.location.protocol === 'https:' || window.location.hostname === 'local
             }
         }
     });
-} 
+}
+
+// 初期設定の読み込み
+loadSettings(); 
