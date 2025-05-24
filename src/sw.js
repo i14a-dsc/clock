@@ -27,18 +27,34 @@ self.addEventListener('fetch', (event) => {
                 if (response) {
                     return response;
                 }
-                return fetch(event.request)
+                // Important: Cloned response must be used only once for the cache.put()!
+                const fetchRequest = event.request.clone();
+
+                return fetch(fetchRequest)
                     .then((response) => {
-                        if (!response || response.status !== 200 || response.type !== 'basic' || !event.request.url.startsWith('http')) {
+                        // Check if we received a valid response
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
                             return response;
                         }
+
+                        // Important: Cloned response must be used only once for the cache.put()!
                         const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
+
+                        // Only cache http(s) requests
+                        if (responseToCache.url.startsWith('http')) {
+                             caches.open(CACHE_NAME)
+                                .then((cache) => {
+                                    cache.put(event.request, responseToCache);
+                                });
+                        }
+
                         return response;
-                    });
+                    })
+                    .catch(error => {
+                        console.error('Fetch failed:', error);
+                        // Optionally, return a custom offline page
+                        // return caches.match('/offline.html');
+                    })
             })
     );
 });
