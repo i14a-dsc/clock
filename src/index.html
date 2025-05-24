@@ -26,12 +26,6 @@
     <button id="positionToggleBtn" class="position-toggle-btn">
       <span class="material-icons">vertical_align_top</span>
     </button>
-    <button id="cacheUpdateBtn" class="cache-update-btn" style="display: none;">
-      <span class="material-icons">refresh</span>
-    </button>
-    <button id="wakeLockBtn" class="wake-lock-btn">
-      <span class="material-icons">power_settings_new</span>
-    </button>
     <div id="uiControls" class="ui-controls">
       <button id="fullscreenBtn" class="fullscreen-btn">
         <span class="material-icons">fullscreen</span>
@@ -54,8 +48,8 @@
         <span>ランチ</span>
         <button class="preview-btn" data-sound="lunchSound">
           <span class="material-icons">play_circle</span>
-        </button>
-      </div>
+          </button>
+        </div>
       <div class="sound-control">
         <span>終業</span>
         <button class="preview-btn" data-sound="endSound">
@@ -73,17 +67,9 @@
               <div class="progress" id="workProgress"></div>
             </div>
             <div class="progress-text" id="workProgressText">0%</div>
-            <div class="time-shift-buttons">
-              <button class="time-shift-btn" data-shift="-60">-1時間</button>
-              <button class="time-shift-btn" data-shift="-30">-30分</button>
-              <button class="time-shift-btn" data-shift="-15">-15分</button>
-              <button class="time-shift-btn" data-shift="15">+15分</button>
-              <button class="time-shift-btn" data-shift="30">+30分</button>
-              <button class="time-shift-btn" data-shift="60">+1時間</button>
-            </div>
           </div>
         </div>
-      </div>
+        </div>
     </div>
     <audio id="alarmSound" src="sound.mp3"></audio>
     <audio id="endSound" src="end.mp3"></audio>
@@ -92,21 +78,6 @@
       const script = document.createElement('script');
       script.src = 'js/clock.js?v=' + timestamp;
       document.body.appendChild(script);
-
-      if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-              .then((registration) => {
-                console.log('ServiceWorker registration successful');
-                document.getElementById('cacheUpdateBtn').style.display = 'block';
-              })
-              .catch((err) => {
-                console.log('ServiceWorker registration failed: ', err);
-              });
-          });
-        }
-      }
     </script>
   </body>
 </html>

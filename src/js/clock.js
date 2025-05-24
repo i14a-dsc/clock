@@ -6,114 +6,7 @@ let lastHour = new Date().getHours();
 let hasPlayedEndSound = false;
 let hasPlayedLunchSound = false;
 let isTopPosition = false;
-let timeShift = 0;
-let isWakeLockEnabled = false;
-
-const DB_NAME = 'clock-settings';
-const DB_VERSION = 1;
-const STORE_NAME = 'settings';
-
-function initDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-    });
-}
-
-async function saveSettings() {
-    try {
-        const db = await initDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-
-        const settings = {
-            isAlarmEnabled,
-            isWorkTimeEnabled,
-            isTopPosition,
-            isWakeLockEnabled
-        };
-
-        await new Promise((resolve, reject) => {
-            const request = store.put(settings, 'clock-settings');
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-
-        console.log('設定を保存しました:', settings);
-    } catch (error) {
-        console.error('設定の保存に失敗しました:', error);
-    }
-}
-
-async function loadSettings() {
-    try {
-        const db = await initDB();
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const settings = await store.get('clock-settings');
-
-        if (settings) {
-            isAlarmEnabled = settings.isAlarmEnabled ?? false;
-            isWorkTimeEnabled = settings.isWorkTimeEnabled ?? false;
-            isTopPosition = settings.isTopPosition ?? false;
-            isWakeLockEnabled = settings.isWakeLockEnabled ?? false;
-
-            await updateUIFromSettings();
-        }
-    } catch (error) {
-        console.error('設定の読み込みに失敗しました:', error);
-    }
-}
-
-async function updateUIFromSettings() {
-    alarmBtn.classList.toggle('active', isAlarmEnabled);
-    const alarmIcon = alarmBtn.querySelector('.material-icons');
-    alarmIcon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
-
-    workTimeBtn.classList.toggle('active', isWorkTimeEnabled);
-    const workIcon = workTimeBtn.querySelector('.material-icons');
-    workIcon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
-    
-    if (isWorkTimeEnabled) {
-        workProgressContainer.style.display = 'block';
-        const now = new Date();
-        const { progress, text } = calculateProgress(now);
-        workProgress.style.width = `${progress}%`;
-        workProgressText.textContent = text;
-    } else {
-        workProgressContainer.style.display = 'none';
-    }
-
-    document.body.classList.toggle('top-position', isTopPosition);
-    positionToggleBtn.classList.toggle('active', isTopPosition);
-    const positionIcon = positionToggleBtn.querySelector('.material-icons');
-    positionIcon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
-
-    wakeLockBtn.classList.toggle('active', isWakeLockEnabled);
-    const wakeLockIcon = wakeLockBtn.querySelector('.material-icons');
-    wakeLockIcon.textContent = isWakeLockEnabled ? 'power_off' : 'power_settings_new';
-
-    if (isWakeLockEnabled) {
-        try {
-            await requestWakeLock();
-        } catch (error) {
-            console.error('WakeLockの復元に失敗しました:', error);
-            isWakeLockEnabled = false;
-            wakeLockBtn.classList.remove('active');
-            wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
-            await saveSettings();
-        }
-    }
-}
+let lastMinute = new Date().getMinutes();
 
 const alarmSound = document.getElementById('alarmSound');
 const endSound = document.getElementById('endSound');
@@ -164,60 +57,62 @@ const workProgress = document.getElementById('workProgress');
 const workProgressText = document.getElementById('workProgressText');
 
         
-workTimeBtn.addEventListener('click', async () => {
+workTimeBtn.addEventListener('click', () => {
     isWorkTimeEnabled = !isWorkTimeEnabled;
     workTimeBtn.classList.toggle('active');
     const icon = workTimeBtn.querySelector('.material-icons');
     icon.textContent = isWorkTimeEnabled ? 'work' : 'work_off';
     workProgressContainer.style.display = isWorkTimeEnabled ? 'block' : 'none';
     hasPlayedEndSound = false;
-    await saveSettings();
 });
 
 function resetDailyFlags() {
     const now = new Date();
-    if (now.getHours() === 0 && now.getMinutes() === 0) {
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    if (currentHour === 0 && currentMinute === 0) {
         hasPlayedEndSound = false;
         hasPlayedLunchSound = false;
     }
-}
 
-const timeShiftButtons = document.querySelectorAll('.time-shift-btn');
-timeShiftButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const shift = parseInt(button.getAttribute('data-shift'));
-        timeShift += shift;
-        if (timeShift < -60) timeShift = -60;
-        if (timeShift > 60) timeShift = 60;
-    });
-});
+    if (currentHour === WORK_END_HOUR && currentMinute === 0 && !hasPlayedEndSound) {
+        endSound.play();
+        hasPlayedEndSound = true;
+    }
+
+    if (currentHour === LUNCH_HOUR && currentMinute === 0 && !hasPlayedLunchSound) {
+        lunchSound.play();
+        hasPlayedLunchSound = true;
+    }
+
+    if (currentHour !== lastHour && currentMinute === 0 && isAlarmEnabled) {
+        alarmSound.play();
+    }
+
+    lastHour = currentHour;
+    lastMinute = currentMinute;
+}
 
 function calculateProgress(now) {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentSecond = now.getSeconds();
 
-    const totalMinutes = currentHour * 60 + currentMinute + timeShift;
-    const adjustedHour = Math.floor(totalMinutes / 60);
-    const adjustedMinute = totalMinutes % 60;
-    
-    const adjustedDate = new Date(now);
-    adjustedDate.setHours(adjustedHour, adjustedMinute, currentSecond);
-
-    if (adjustedHour < WORK_START_HOUR) {
-        const totalSecondsUntilStart = (WORK_START_HOUR * 3600) - (adjustedHour * 3600 + adjustedMinute * 60 + currentSecond);
+    if (currentHour < WORK_START_HOUR) {
+        const totalSecondsUntilStart = (WORK_START_HOUR * 3600) - (currentHour * 3600 + currentMinute * 60 + currentSecond);
         const totalSecondsInPreWork = WORK_START_HOUR * 3600;
-        const progress = Math.max(0, 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100));
+        const progress = 100 - (totalSecondsUntilStart / totalSecondsInPreWork * 100);
         return {
             progress,
             text: `勤務開始まで ${Math.floor(totalSecondsUntilStart / 3600)}時間${Math.floor((totalSecondsUntilStart % 3600) / 60)}分 (${Math.round(progress)}%)`
         };
     }
     
-    if (adjustedHour < WORK_END_HOUR) {
-        const totalSecondsWorked = (adjustedHour - WORK_START_HOUR) * 3600 + adjustedMinute * 60 + currentSecond;
+    if (currentHour < WORK_END_HOUR) {
+        const totalSecondsWorked = (currentHour - WORK_START_HOUR) * 3600 + currentMinute * 60 + currentSecond;
         const totalWorkSeconds = (WORK_END_HOUR - WORK_START_HOUR) * 3600;
-        const progress = Math.min(100, (totalSecondsWorked / totalWorkSeconds) * 100);
+        const progress = (totalSecondsWorked / totalWorkSeconds) * 100;
         const remainingSeconds = totalWorkSeconds - totalSecondsWorked;
         return {
             progress,
@@ -232,32 +127,11 @@ function calculateProgress(now) {
 }
 
 const alarmBtn = document.getElementById('alarmBtn');
-alarmBtn.addEventListener('click', async () => {
+alarmBtn.addEventListener('click', () => {
     isAlarmEnabled = !isAlarmEnabled;
     alarmBtn.classList.toggle('active');
     const icon = alarmBtn.querySelector('.material-icons');
     icon.textContent = isAlarmEnabled ? 'notifications_active' : 'notifications_off';
-    await saveSettings();
-});
-
-const wakeLockBtn = document.getElementById('wakeLockBtn');
-wakeLockBtn.addEventListener('click', async () => {
-    if (isWakeLockEnabled) {
-        releaseWakeLock();
-        isWakeLockEnabled = false;
-        wakeLockBtn.classList.remove('active');
-        wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
-    } else {
-        try {
-            await requestWakeLock();
-            isWakeLockEnabled = true;
-            wakeLockBtn.classList.add('active');
-            wakeLockBtn.querySelector('.material-icons').textContent = 'power_off';
-        } catch (error) {
-            console.error('WakeLockの取得に失敗しました:', error);
-        }
-    }
-    await saveSettings();
 });
 
 async function requestWakeLock() {
@@ -265,15 +139,10 @@ async function requestWakeLock() {
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLock.addEventListener('release', () => {
             console.log('Wake Lock was released');
-            isWakeLockEnabled = false;
-            wakeLockBtn.classList.remove('active');
-            wakeLockBtn.querySelector('.material-icons').textContent = 'power_settings_new';
-            saveSettings();
         });
         console.log('Wake Lock is active');
     } catch (err) {
         console.error(`${err.name}, ${err.message}`);
-        throw err;
     }
 }
 
@@ -318,13 +187,12 @@ uiToggleBtn.addEventListener('click', () => {
 });
 
 const positionToggleBtn = document.getElementById('positionToggleBtn');
-positionToggleBtn.addEventListener('click', async () => {
+positionToggleBtn.addEventListener('click', () => {
     isTopPosition = !isTopPosition;
     document.body.classList.toggle('top-position', isTopPosition);
     positionToggleBtn.classList.toggle('active', isTopPosition);
     const icon = positionToggleBtn.querySelector('.material-icons');
     icon.textContent = isTopPosition ? 'vertical_align_bottom' : 'vertical_align_top';
-    await saveSettings();
 });
 
 function updateClock() {
@@ -342,68 +210,14 @@ function updateClock() {
     const weekday = weekdays[now.getDay()];
     document.getElementById('date').textContent = `${year}年${month}月${day}日(${weekday})`;
 
-    const currentHour = now.getHours();
-    if (isAlarmEnabled && currentHour !== lastHour && now.getMinutes() === 0) {
-        alarmSound.play();
-        lastHour = currentHour;
-    }
-
-    if (currentHour === LUNCH_HOUR && now.getMinutes() === 0 && !hasPlayedLunchSound) {
-        lunchSound.play();
-        hasPlayedLunchSound = true;
-    }
-
     if (isWorkTimeEnabled) {
         const { progress, text } = calculateProgress(now);
         workProgress.style.width = `${progress}%`;
         workProgressText.textContent = text;
-
-        const totalMinutes = currentHour * 60 + now.getMinutes() + timeShift;
-        const adjustedHour = Math.floor(totalMinutes / 60);
-        const adjustedMinute = totalMinutes % 60;
-
-        if (adjustedHour === WORK_END_HOUR && adjustedMinute === 0 && !hasPlayedEndSound) {
-            endSound.play();
-            hasPlayedEndSound = true;
-        }
     }
 
     resetDailyFlags();
 }
 
-// 初期化処理
-async function initialize() {
-    await loadSettings();
-    // updateClock() と setInterval の呼び出しは DOMContentLoaded イベントリスナーに移す
-}
-
-// 初期化を実行
-// initialize(); // DOMContentLoaded イベントリスナー内で呼び出す
-
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOMContentLoaded');
-    // 設定を読み込み、UIを更新
-    await loadSettings();
-    // 時刻表示の開始
-    updateClock();
-    setInterval(updateClock, 1000);
-});
-
-const cacheUpdateBtn = document.getElementById('cacheUpdateBtn');
-if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-    cacheUpdateBtn.addEventListener('click', async () => {
-        if ('serviceWorker' in navigator) {
-            try {
-                const registration = await navigator.serviceWorker.getRegistration();
-                if (registration) {
-                    cacheUpdateBtn.classList.add('active');
-                    await registration.update();
-                    await caches.delete('clock-cache-v1');
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('キャッシュの更新に失敗しました:', error);
-            }
-        }
-    });
-} 
+updateClock();
+setInterval(updateClock, 1000); 
