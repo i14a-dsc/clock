@@ -371,13 +371,23 @@ function updateClock() {
     resetDailyFlags();
 }
 
+// 初期化処理
 async function initialize() {
     await loadSettings();
-    updateClock();
-    setInterval(updateClock, 1000);
+    // updateClock() と setInterval の呼び出しは DOMContentLoaded イベントリスナーに移す
 }
 
-initialize();
+// 初期化を実行
+// initialize(); // DOMContentLoaded イベントリスナー内で呼び出す
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOMContentLoaded');
+    // 設定を読み込み、UIを更新
+    await loadSettings();
+    // 時刻表示の開始
+    updateClock();
+    setInterval(updateClock, 1000);
+});
 
 const cacheUpdateBtn = document.getElementById('cacheUpdateBtn');
 if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
