@@ -4,14 +4,14 @@
 
 :root {
   --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --text-primary: #C0C0C0;
-  --text-secondary: #B0B0B0;
-  --accent-color: #1a4a6e;
-  --error-color: #6e1a1a;
-  --success-color: #1a6e1a;
-  --border-color: #202020;
-  --progress-color: #3a8acb;
+  --bg-secondary: #2a2a3e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #c0c0c0;
+  --accent-color: #4a90e2;
+  --error-color: #e24a4a;
+  --success-color: #4ae24a;
+  --border-color: #3a3a4e;
+  --progress-color: #4a90e2;
   --transition-speed: 0.2s;
 }
 
@@ -335,7 +335,7 @@ a {
 .time {
   font-family: 'Roboto Mono', monospace;
   font-size: 15vw;
-  font-weight: 300;
+  font-weight: 400;
   margin-bottom: 0.5rem;
   text-shadow: none;
   letter-spacing: 2px;
@@ -343,7 +343,7 @@ a {
 }
 
 .date {
-  font-size: 5vw;
+  font-size: 4vw;
   opacity: 0.8;
   margin-top: 1rem;
   color: var(--text-secondary);
@@ -353,10 +353,14 @@ a {
   position: fixed;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
   transition: background-color var(--transition-speed);
@@ -406,10 +410,14 @@ body:fullscreen .progress-text {
   position: fixed;
   top: 1rem;
   right: 4rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
   transition: background-color var(--transition-speed);
@@ -436,10 +444,14 @@ body:fullscreen .progress-text {
   position: fixed;
   top: 1rem;
   right: 7rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
   transition: background-color var(--transition-speed);
@@ -515,118 +527,182 @@ body:fullscreen .progress-text {
 }
 
 .sound-controls {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    z-index: 1000;
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  z-index: 1000;
 }
 
 .sound-control {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
 }
 
 .preview-btn {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition-speed);
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-speed);
 }
 
 .preview-btn:hover {
-    color: var(--accent-color);
+  color: var(--accent-color);
 }
 
 .preview-btn .material-icons {
-    font-size: 1.5rem;
+  font-size: 1.5rem;
 }
 
 body:fullscreen .sound-controls {
-    display: none;
+  display: none;
 }
 
 .ui-toggle-btn {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: all var(--transition-speed);
-    z-index: 1001;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .ui-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .ui-toggle-btn .material-icons {
-    font-size: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .ui-toggle-btn.active {
-    color: var(--accent-color);
+  color: var(--accent-color);
 }
 
 body.hide-ui .ui-controls,
 body.hide-ui .sound-controls {
-    display: none;
+  display: none;
 }
 
 body:fullscreen .ui-toggle-btn {
-    display: block;
+  display: block;
 }
 
 .position-toggle-btn {
-    position: fixed;
-    top: 1rem;
-    left: 4rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: all var(--transition-speed);
-    z-index: 1001;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .position-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .position-toggle-btn .material-icons {
-    font-size: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .position-toggle-btn.active {
-    color: var(--accent-color);
+  color: var(--accent-color);
 }
 
 body.top-position .clock-container {
-    position: fixed;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    padding-top: 1rem;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 1rem;
 }
 
 body.top-position .work-progress-container {
-    margin-top: 0;
+  margin-top: 0;
+}
+
+.time-shift-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.time-shift-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--transition-speed);
+  font-size: 0.9rem;
+}
+
+.time-shift-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.hide-ui .position-toggle-btn,
+body.hide-ui .time-shift-buttons {
+  display: none;
+}
+
+.top-left-controls {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.top-left-controls .ui-toggle-btn {
+  position: static;
+  top: auto;
+  left: auto;
+}
+
+.top-left-controls .position-toggle-btn {
+  position: static;
+  top: auto;
+  left: auto;
+}
+
+body.hide-ui .top-left-controls .position-toggle-btn,
+body.hide-ui .top-left-controls #updateCacheBtn {
+  display: none;
+}
+
+.ui-controls {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }

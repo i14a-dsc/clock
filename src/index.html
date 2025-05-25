@@ -4,28 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>デジタル時計</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <script>
-      const timestamp = new Date().getTime();
-      const loadCSS = (href) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href + '?v=' + timestamp;
-        document.head.appendChild(link);
-      };
-      loadCSS('css/reset.css');
-      loadCSS('css/common.css');
-    </script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="stylesheet" href="css/clock.css?v=6" />
+    <link rel="stylesheet" href="css/common.css?v=6" />
+    <script src="js/clock.js?v=6" defer type="module"></script>
   </head>
   <body>
-    <button id="uiToggleBtn" class="ui-toggle-btn">
-      <span class="material-icons">visibility</span>
-    </button>
-    <button id="positionToggleBtn" class="position-toggle-btn">
-      <span class="material-icons">vertical_align_top</span>
-    </button>
+    <div class="top-left-controls">
+      <button id="uiToggleBtn" class="ui-toggle-btn" style="visibility: visible !important">
+        <span class="material-icons">visibility</span>
+      </button>
+      <button id="positionToggleBtn" class="position-toggle-btn">
+        <span class="material-icons">vertical_align_top</span>
+      </button>
+      <button id="updateCacheBtn" class="ui-toggle-btn">
+        <span class="material-icons">refresh</span>
+        <!-- キャッシュ更新 -->
+      </button>
+    </div>
     <div id="uiControls" class="ui-controls">
       <button id="fullscreenBtn" class="fullscreen-btn">
         <span class="material-icons">fullscreen</span>
@@ -48,8 +46,8 @@
         <span>ランチ</span>
         <button class="preview-btn" data-sound="lunchSound">
           <span class="material-icons">play_circle</span>
-          </button>
-        </div>
+        </button>
+      </div>
       <div class="sound-control">
         <span>終業</span>
         <button class="preview-btn" data-sound="endSound">
@@ -62,22 +60,77 @@
         <div class="clock">
           <div class="time" id="time">00:00:00</div>
           <div class="date" id="date">2024年4月7日</div>
-          <div class="work-progress-container" id="workProgressContainer" style="display: none;">
+          <div class="work-progress-container" id="workProgressContainer" style="display: none">
             <div class="progress-bar">
               <div class="progress" id="workProgress"></div>
             </div>
             <div class="progress-text" id="workProgressText">0%</div>
+            <div class="time-shift-buttons">
+              <button class="time-shift-btn" data-shift="-60">-1時間</button>
+              <button class="time-shift-btn" data-shift="-30">-30分</button>
+              <button class="time-shift-btn" data-shift="-15">-15分</button>
+              <button class="time-shift-btn" data-shift="15">+15分</button>
+              <button class="time-shift-btn" data-shift="30">+30分</button>
+              <button class="time-shift-btn" data-shift="60">+1時間</button>
+            </div>
           </div>
         </div>
-        </div>
+      </div>
     </div>
     <audio id="alarmSound" src="sound.mp3"></audio>
     <audio id="endSound" src="end.mp3"></audio>
     <audio id="lunchSound" src="lunch.mp3"></audio>
     <script>
-      const script = document.createElement('script');
-      script.src = 'js/clock.js?v=' + timestamp;
-      document.body.appendChild(script);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+          .register('sw.js')
+          .then(reg => {
+            console.log('Service Worker registered', reg);
+
+            const showUpdateBar = () => {
+              const updateCacheBtn = document.getElementById('updateCacheBtn');
+              if (updateCacheBtn) {
+                updateCacheBtn.style.display = 'block'; // Show update button
+                updateCacheBtn.addEventListener('click', () => {
+                  if (reg.waiting) {
+                    reg.waiting.postMessage({ action: 'skipWaiting' });
+                  } else if (reg.installing) {
+                    reg.installing.postMessage({ action: 'skipWaiting' });
+                  }
+                });
+              }
+            };
+
+            reg.addEventListener('updatefound', () => {
+              const installingWorker = reg.installing;
+              installingWorker.addEventListener('statechange', () => {
+                if (installingWorker.state === 'installed') {
+                  // New service worker is installed, but waiting
+                  if (navigator.serviceWorker.controller) {
+                    // A controller is already active, show update button
+                    showUpdateBar();
+                  } else {
+                    // No controller, this is the first install
+                    console.log(
+                      'Service worker installed for the first time. Content is available offline.'
+                    );
+                  }
+                }
+              });
+            });
+
+            // Check if there's a waiting worker on page load
+            if (reg.waiting) {
+              showUpdateBar();
+            }
+
+            // Listen for the controllerchange event to reload the page after skipWaiting
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              window.location.reload();
+            });
+          })
+          .catch(err => console.error('Service Worker registration failed', err));
+      }
     </script>
   </body>
 </html>
