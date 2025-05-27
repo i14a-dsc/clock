@@ -244,22 +244,22 @@ function updateClock() {
   }
 
   // 分が変わったらアラーム再生フラグをリセット
-  if (adjustedMinute !== lastMinute) {
+  if (currentMinute !== lastMinute) {
     hasPlayedAlarmForMinute = false;
   }
 
   // アラームが有効で、設定時刻になり、かつその分でまだ再生していない場合
   if (
     isAlarmEnabled &&
-    adjustedHour === alarmTargetHour &&
-    adjustedMinute === alarmTargetMinute &&
+    currentHour === alarmTargetHour &&
+    currentMinute === alarmTargetMinute &&
     !hasPlayedAlarmForMinute
   ) {
     alarmSound.play();
     hasPlayedAlarmForMinute = true; // この分では再生済みとする
   }
 
-  if (adjustedHour === LUNCH_HOUR && adjustedMinute === LUNCH_MINUTE && !hasPlayedLunchSound) {
+  if (currentHour === LUNCH_HOUR && currentMinute === LUNCH_MINUTE && !hasPlayedLunchSound) {
     lunchSound.play();
     hasPlayedLunchSound = true;
   }
@@ -270,8 +270,8 @@ function updateClock() {
     workProgressText.textContent = text;
 
     if (
-      adjustedHour === WORK_END_HOUR &&
-      adjustedMinute === WORK_END_MINUTE &&
+      currentHour === WORK_END_HOUR &&
+      currentMinute === WORK_END_MINUTE &&
       !hasPlayedEndSound
     ) {
       endSound.play();
